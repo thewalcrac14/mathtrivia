@@ -302,110 +302,136 @@ const preguntas = [
     }
 ]
 
-
-
-
-//tomamos los elementos html
-const txtPuntaje = document.querySelector("#puntos");
-const nombre = document.querySelector("#nombre");
-
 nombre.innerHTML = localStorage.getItem("nombre");
+const txtPuntaje = document.querySelector("#puntos");
+const txtNombre = document.querySelector("#nombre");
+const btnSiguiente = document.querySelector("#siguiente");
+const btn5050 = document.querySelector("#btn-5050");
+const btnX2 = document.querySelector("#btn-x2");
+const btnEscudo = document.querySelector("#btn-escudo");
+
 let numPreguntaActual = 0;
-
-//Recupero el puntaje en caso que ya este jugando
 let puntajeTotal = 0;
-if(!localStorage.getItem("puntaje-total")){
-    puntajeTotal = 0;
-    txtPuntaje.innerHTML = puntajeTotal
-}else{
+
+let multiplicadorProximaPregunta = false; // Se activa al presionar el botón
+let multiplicadorActivoAhora = false;      // Se activa al cambiar de pregunta
+let escudoActivo = false;
+
+txtNombre.innerHTML = localStorage.getItem("nombre") || "Jugador";
+if (localStorage.getItem("puntaje-total")) {
     puntajeTotal = parseInt(localStorage.getItem("puntaje-total"));
-    txtPuntaje.innerHTML = puntajeTotal;
 }
+txtPuntaje.innerHTML = puntajeTotal;
 
-//cargar las preguntas del tema que eligió
 const categoriaActual = localStorage.getItem("categoria-actual");
-const preguntasCategoria = preguntas.filter(pregunta => pregunta.categoria === categoriaActual);
+const preguntasCategoria = preguntas.filter(p => p.categoria === categoriaActual);
 
-function cargarSiguientePregunta(num){
-    //tomo los elementos donde se cargaran los datos de la pregunta
-    const numPregunta = document.querySelector("#num-pregunta");
-    const txtPregunta = document.querySelector("#txt-pregunta");
-    const opcionA = document.querySelector("#a");
-    const opcionB = document.querySelector("#b");
-    const opcionC = document.querySelector("#c");
-    const opcionD = document.querySelector("#d");
+function cargarSiguientePregunta(num) {
+    if (num >= preguntasCategoria.length) return;
 
-    numPregunta.innerHTML = num + 1;
-    txtPregunta.innerHTML = preguntasCategoria[num].titulo;
-    opcionA.innerHTML = preguntasCategoria[num].opcionA;
-    opcionB.innerHTML = preguntasCategoria[num].opcionB;
-    opcionC.innerHTML = preguntasCategoria[num].opcionC;
-    opcionD.innerHTML = preguntasCategoria[num].opcionD;
+    const numPreguntaHTML = document.querySelector("#num-pregunta");
+    const txtPreguntaHTML = document.querySelector("#txt-pregunta");
+    const btnOpciones = document.querySelectorAll(".opcion");
 
+    numPreguntaHTML.innerHTML = (num + 1).toString().padStart(2, '0');
+    txtPreguntaHTML.innerHTML = preguntasCategoria[num].titulo;
     
+    btnOpciones[0].innerHTML = preguntasCategoria[num].opcionA;
+    btnOpciones[1].innerHTML = preguntasCategoria[num].opcionB;
+    btnOpciones[2].innerHTML = preguntasCategoria[num].opcionC;
+    btnOpciones[3].innerHTML = preguntasCategoria[num].opcionD;
 
-    //Agrego un eventlistener a cada boton de respuesta
-    const botonesRespuesta = document.querySelectorAll(".opcion");
-    //Quito los eventListen y las clases
-    botonesRespuesta.forEach(opcion=>{
-        opcion.removeEventListener("click", (e)=>{});
-        opcion.classList.remove("correcta");
-        opcion.classList.remove("incorrecta");
-        opcion.classList.remove("no-events");
-    })
+    if (multiplicadorProximaPregunta) {
+        multiplicadorActivoAhora = true;
+        multiplicadorProximaPregunta = false;
+        btnX2.classList.add("activo");
+    } else {
+        multiplicadorActivoAhora = false;
+        btnX2.classList.remove("activo");
+    }
 
-    botonesRespuesta.forEach(opcion=>{
-        opcion.addEventListener("click", agregarEventListenerBoton);
-    })
+    escudoActivo = false;
+    if(btnEscudo) btnEscudo.classList.remove("activo");
+
+    btnOpciones.forEach(opcion => {
+        opcion.classList.remove("correcta", "incorrecta", "no-events");
+        opcion.style.visibility = "visible";
+        opcion.onclick = () => validarRespuesta(opcion.id);
+    });
 
     txtPuntaje.classList.remove("efecto");
 }
 
-function agregarEventListenerBoton(e){
-    console.log(e.currentTarget.id);
-    console.log(numPreguntaActual);
-    console.log(preguntas[numPreguntaActual].correcta);
-    //Controlo si la respuesta es correcta
-    if(e.currentTarget.id === preguntasCategoria[numPreguntaActual].correcta){
-        e.currentTarget.classList.add("correcta");
-        puntajeTotal = puntajeTotal + 100;
+function validarRespuesta(idSeleccionado) {
+    const correctaId = preguntasCategoria[numPreguntaActual].correcta;
+    const botonSeleccionado = document.getElementById(idSeleccionado);
+
+    if (idSeleccionado === correctaId) {
+        botonSeleccionado.classList.add("correcta");
+        
+        let puntosBase = escudoActivo ? 50 : 100;
+        let puntosFinales = multiplicadorActivoAhora ? (puntosBase * 2) : puntosBase;
+        
+        puntajeTotal += puntosFinales;
         txtPuntaje.innerHTML = puntajeTotal;
         localStorage.setItem("puntaje-total", puntajeTotal);
         txtPuntaje.classList.add("efecto");
-    }else{
-        e.currentTarget.classList.add("incorrecta");
-        const correcta = document.querySelector("#"+preguntasCategoria[numPreguntaActual].correcta);
-        correcta.classList.add("correcta");
+
+        finalizarPregunta();
+    } else {
+        if (escudoActivo) {
+            botonSeleccionado.classList.add("incorrecta");
+            botonSeleccionado.classList.add("no-events");
+            alert("🛡️ Escudo usado. Elige otra opción.");
+        } else {
+            botonSeleccionado.classList.add("incorrecta");
+            document.getElementById(correctaId).classList.add("correcta");
+            document.getElementById(correctaId).style.visibility = "visible";
+            finalizarPregunta();
+        }
     }
-    //Agrego un eventlistener a cada boton de respuesta
-    const botonesRespuesta = document.querySelectorAll(".opcion");
-    //Quito los eventListen para que no pueda seguir haciendo clic
-    console.log(botonesRespuesta)
-    botonesRespuesta.forEach(opcion=>{
-        opcion.classList.add("no-events");
-    })
 }
 
-cargarSiguientePregunta(numPreguntaActual);
+function finalizarPregunta() {
+    document.querySelectorAll(".opcion").forEach(btn => btn.classList.add("no-events"));
+}
 
-//tomo el boton siguiente
-const btnSiguiente = document.querySelector("#siguiente")
-btnSiguiente.addEventListener("click",()=>{
+btn5050.addEventListener("click", () => {
+    const correctaId = preguntasCategoria[numPreguntaActual].correcta;
+    const opciones = Array.from(document.querySelectorAll(".opcion"));
+    let incorrectas = opciones.filter(opt => opt.id !== correctaId);
+    incorrectas.sort(() => Math.random() - 0.5);
+    incorrectas[0].style.visibility = "hidden";
+    incorrectas[1].style.visibility = "hidden";
+    btn5050.disabled = true;
+    btn5050.style.opacity = "0.4";
+});
+
+btnX2.addEventListener("click", () => {
+    multiplicadorProximaPregunta = true;
+    btnX2.disabled = true;
+    btnX2.style.opacity = "0.4";
+    alert("✨ ¡Poder x2 activado para la PRÓXIMA pregunta!");
+});
+
+btnEscudo.addEventListener("click", () => {
+    escudoActivo = true;
+    btnEscudo.classList.add("activo");
+    btnEscudo.disabled = true;
+    btnEscudo.style.opacity = "0.4";
+});
+
+btnSiguiente.addEventListener("click", () => {
     numPreguntaActual++;
-    if(numPreguntaActual<=4){
+    if (numPreguntaActual < 5) {
         cargarSiguientePregunta(numPreguntaActual);
+    } else {
+        location.href = (JSON.parse(localStorage.getItem("categorias-jugadas")) || []).length < 6 
+            ? "menu.html" : "final.html";
     }
-    else{
-        const categoriasJugadasLS = JSON.parse(localStorage.getItem("categorias-jugadas"));
-       
-        console.log(categoriasJugadasLS.length);
-        if(parseInt(categoriasJugadasLS.length) < 6){
-            //alert(categoriasJugadasLS.length);
-            location.href = "menu.html";
-        }else{
-            //lo mando a la pantalla final
-            location.href = "final.html";
-        }
+});
+
+cargarSiguientePregunta(numPreguntaActual);
         
     }
     
