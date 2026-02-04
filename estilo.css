@@ -241,4 +241,57 @@ header{
     color: #fff;
     margin: 10px 0;
     display: inline-block;
+
+}
+
+/* SECCION CARTAS / PODERES */
+.cartas-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.btn-carta {
+    background-color: #6b5ae4; /* Morado de tu header */
+    color: #fff;
+    border: 2px solid #ffe43a; /* Amarillo de tus bordes */
+    padding: 10px 15px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    transition: .3s;
+    box-shadow: 3px 3px 5px #2a2929;
+}
+
+.btn-carta:hover:not(:disabled) {
+    background-color: #ffe43a;
+    color: #2a2929;
+    transform: translateY(-3px);
+}
+
+.btn-carta:disabled {
+    filter: grayscale(1);
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-carta#btn-escudo.activo {
+    background-color: #3498db;
+    box-shadow: 0 0 15px #3498db;
+    animation: latido 1s infinite;
+}
+
+/* Animación especial para cuando el x2 está activo */
+.btn-carta.activo {
+    animation: latido 1s infinite;
+    background-color: #ffe43a;
+    color: #0b0b0b;
+}
+
+@keyframes latido {
+    0% { transform: scale(1); box-shadow: 0 0 5px #ffe43a; }
+    50% { transform: scale(1.05); box-shadow: 0 0 15px #ffe43a; }
+    100% { transform: scale(1); box-shadow: 0 0 5px #ffe43a; }
 }
