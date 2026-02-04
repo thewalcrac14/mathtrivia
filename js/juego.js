@@ -302,6 +302,7 @@ const preguntas = [
     }
 ]
 
+
 nombre.innerHTML = localStorage.getItem("nombre");
 const txtPuntaje = document.querySelector("#puntos");
 const txtNombre = document.querySelector("#nombre");
@@ -432,7 +433,3 @@ btnSiguiente.addEventListener("click", () => {
 });
 
 cargarSiguientePregunta(numPreguntaActual);
-        
-    }
-    
-})
